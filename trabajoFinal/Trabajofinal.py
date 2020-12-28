@@ -65,12 +65,12 @@ def exportar(layer, nombre_shp_salida):
     encoding = "windows-1252"
     formato_salida = "ESRI Shapefile"
     QgsVectorFileWriter.writeAsVectorFormat(layer, ruta_salida, encoding, layer.crs(), formato_salida, onlySelected=True)
+    print ("Se ha creado {0} en el espacio de trabajo establecido".format(shp_salida))
 
-# Etablecer espacio de trabajo
-directorio = "C:\\Users\\elena\\Desktop\\Universidad\\MasterTIGUAH\\Programacion\\Trabajofinal\\Material_practica\\capas_entrada"
+# Establecer espacio de trabajo
+directorio = r"C:\Users\elena\Desktop\Universidad\MasterTIGUAH\Programacion\Trabajofinal\Materialpractica\capas_entrada"
 os.chdir(directorio)
 
-lista_shp = []
 lista_archivos = os.listdir()  # Lista de las capas en el espacio de trabajo
 
 # Abrir tambien el csv (tabla) separado por punto y comas
@@ -91,7 +91,6 @@ for archivo in lista_archivos:
             pass
         else:
             # Quitar la extension
-            lista_shp.append(archivo)
             
             capa_sin_extension = archivo[:-4]  # El nombre de la capa sin extension
             
@@ -123,9 +122,14 @@ for archivo in lista_archivos:
                 instancia = instanciar(nombre_capa_reproyectada_extension)
         
                 proyeccion_final = instancia.crs().authid()
+                    
+                if proyeccion == "":
+                    print ("{0} no tenía proyección y se ha creado {1} con {2}".\
+                        format(archivo, nombre_capa_reproyectada_extension, proyeccion_final))
                 
-                print ("De {0} con {1} se ha creado {2} con {3}".\
-                format(archivo, proyeccion, nombre_capa_reproyectada_extension, proyeccion_final))
+                else:
+                    print ("De {0} con {1} se ha creado {2} con {3}".\
+                        format(archivo, proyeccion, nombre_capa_reproyectada_extension, proyeccion_final))
 
             elif proyeccion == "EPSG:31370":
                 # No hace falta hacer nada si ya tien el EPSG deseado
@@ -135,7 +139,7 @@ for archivo in lista_archivos:
                 .format(archivo, proyeccion))
 
 print ("*" * 20)
-
+"""
 # Siguente paso: hacer joins
 # 1. Entre capa densidad de poblacion y tabla
 # 2. Entre el resultado del anterior join y Average_Income.shp
@@ -165,7 +169,7 @@ for field in Population_Density_Brussels.fields():
 # Necesito instanciar la capa de Bruselas
 shp3 = "BrusselsCity.shp"
 Bruselas = instanciar(shp3)
-
+"""
 # Condicion para la seleccion 1. Se usa or porque puede ser ambas
 exp_selec_1 = "\"ITEM\" = 'Railways and associated land' or \"ITEM\" \
     = 'Fast transit roads and associated land'"
@@ -174,7 +178,7 @@ Bruselas.selectByExpression(exp_selec_1, QgsVectorLayer.SetSelection)
 # Funcion seleccion por atributos y exportar resultado como shp
 shp_salida = "RoadRailways"
 exportar(Bruselas, shp_salida)
-
+"""
 # Para borrar la seleccion
 Bruselas.removeSelection()
 # Porque despues se parte desde 0 con esta capa
@@ -187,7 +191,7 @@ exp_selec_2 = "\"Density_km\" > 2000 and \"Brussels_AverageAge.csv_AverageAge\"\
 Population_Density_Brussels.selectByExpression(exp_selec_2, QgsVectorLayer.SetSelection)
 shp_salida = "muni_select"
 exportar(Population_Density_Brussels, shp_salida)
-
+"""
 # Seleccion 3. Seleccion de condiciones de la ciudad Bruselas
 exp_selec_3 = "(\"ITEM\" = 'Discontinuous Low Density Urban Fabric (S.L. : 10% - 30%)' \
     or \"ITEM\" = 'Discontinuous Medium Density Urban Fabric (S.L. : 30% - 50%)' or \"ITEM\"\
@@ -216,21 +220,43 @@ exportar(land_select, shp_salida)
 shp6 = "RoadRailways.shp"  # Instancio
 RoadRailways = instanciar(shp6)
 parameter = {"INPUT": RoadRailways,"DISTANCE": 499.999,\
-    "DISSOLVE": True, "OUTPUT": "buffer.shp"}
+    "DISSOLVE": True, "OUTPUT": "buffer_carreteras.shp"}
 processing.run("qgis:buffer", parameter)
-"""
+
 # Seleccion 5. Seleccion por localizacion
 # Seleccionar parcelas de land_muni_select a menos de 500 m de carreteras
 # (usando el buffer)
-shp7 = "buffer.shp"
-buffer = instanciar(shp7)
+shp7 = "buffer_carreteras.shp"
+buffer_carreteras = instanciar(shp7)
 shp8= "land_muni_select.shp"
 land_muni_select = instanciar(shp8)
 parameter = {"INPUT": land_muni_select, "PREDICATE": 0,
-     "INTERSECT": buffer, "OUTPUT": "TEMPORARY_OUTPUT"}
+     "INTERSECT": buffer_carreteras, "OUTPUT": "TEMPORARY_OUTPUT"}
 processing.run("qgis:selectbylocation", parameter)
 # Como en verdad se quiere seleccionar las que quedan a mas
 # de 500 m se debe hacer el inverso de esta seleccion
 land_muni_select.invertSelection()
 shp_salida = "Parcels_dist_transport"
 exportar(land_muni_select, shp_salida)
+
+# Seleccion 6. Seleccion por localizacion
+# Seleccion de zoas a menos de 500 m de escuelas primarias
+# menos de 500 m = 499.999 m
+# Necesario hacer un buffer como antes
+shp9 = "repr_Primary_schools.shp"
+Primary_schools = instanciar(shp9)
+# Creacion del buffer
+parameter = {"INPUT": Primary_schools,"DISTANCE": 499.999,\
+    "DISSOLVE": True, "OUTPUT": "buffer_escuelas_primaria.shp"}
+processing.run("qgis:buffer", parameter)
+# Seleccion por localizacion
+shp10 = "Parcels_dist_transport.shp"
+Parcels_dist_transport = instanciar(shp10)
+shp11 = "buffer_escuelas_primaria.shp"
+buffer_escuelas_primaria = instanciar(shp11)
+parameter = {"INPUT": Parcels_dist_transport, "PREDICATE": 0,
+     "INTERSECT": buffer_escuelas_primaria, "OUTPUT": "TEMPORARY_OUTPUT"}
+processing.run("qgis:selectbylocation", parameter)
+shp_salida = "Selec_final.shp"
+exportar(Parcels_dist_transport, shp_salida)
+"""
