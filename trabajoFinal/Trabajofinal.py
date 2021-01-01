@@ -209,7 +209,7 @@ for archivo in lista_archivos:
                 # Si el crs de entrada no es 31370
                 # O no tiene proyeccion especificada
                 
-                # Necesario decir que la capa de salida es shp (sino formato 
+                # Necesario decir que la capa de salida es shp (si no formato 
                 # predeterminado: geopackage)
                 nombre_reproyectada = "repr_" + capa_sin_extension + ".shp"
                 # Los parametros se almacenan en un diccionario
