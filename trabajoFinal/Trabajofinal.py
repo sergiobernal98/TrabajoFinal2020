@@ -192,7 +192,6 @@ for archivo in lista_archivos:
             pass
         else:
             # Quitar la extension
-            
             capa_sin_extension = archivo[:-4]  # El nombre de la capa sin extension
             
             # Usamos esta funcion en vez de  addVectorLayer() porque no queremos verlas
@@ -203,7 +202,6 @@ for archivo in lista_archivos:
             # Proyectar
             # Ver la proyeccion de cada capa shp
             # para si no es EPSG 31370 proyectarla a ese EPSG
-
             crs = QgsCoordinateReferenceSystem()
             if proyeccion != "EPSG:31370":
                 # Si el crs de entrada no es 31370
@@ -227,7 +225,6 @@ for archivo in lista_archivos:
                 if proyeccion == "":
                     print ("{0} no tenía proyección y se ha creado {1} con {2}".\
                         format(archivo, nombre_capa_reproyectada_extension, proyeccion_final))
-                
                 else:
                     print ("De {0} con {1} se ha creado {2} con {3}".\
                         format(archivo, proyeccion, nombre_capa_reproyectada_extension, proyeccion_final))
